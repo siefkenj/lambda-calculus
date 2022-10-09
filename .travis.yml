@@ -1,0 +1,24 @@
+language: node_js
+node_js:
+  - 16
+cache:
+  directories:
+  - node_modules
+script:
+  - npm install --legacy-peer-deps && npm run build
+before_install:
+  - dpkg --compare-versions `npm -v` ge 8.5.1 || npm i -g npm@^8.5.1
+  - npm --version
+install:
+  - npm ci --force
+after_failure: cat /home/travis/.npm/_logs/*-debug.log
+warnings_are_errors: false
+env:
+  CI=false
+deploy:
+  provider: pages
+  skip_cleanup: true
+  github_token: $github_token
+  local_dir: lambda-calculus-playground/build
+  on:
+    branch: main

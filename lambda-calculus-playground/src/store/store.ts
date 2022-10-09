@@ -54,10 +54,15 @@ export const store = createStore<StoreModel>({
             const evaluated = await parsingWorker.evaluate(
                 state.currentProgram
             );
+            actions.setEvaluateError(null);
             actions.setEvaluated(evaluated);
             actions.setEvaluatedString(print(evaluated));
         } catch (e) {
-            console.log(e);
+            actions.setEvaluateError(String(e));
         }
+    }),
+    evaluateError: null,
+    setEvaluateError: action((state, payload) => {
+        state.evaluateError = payload;
     }),
 });

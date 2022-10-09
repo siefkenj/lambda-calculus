@@ -3,23 +3,41 @@ import { useCodeMirror } from "@uiw/react-codemirror";
 import { linter, LintSource, Diagnostic } from "@codemirror/lint";
 import {
     Container,
+    Row,
+    Col,
     Card,
     ButtonGroup,
     Button,
     Nav,
     Navbar,
+    Dropdown,
+    DropdownButton,
 } from "react-bootstrap";
 import { useStoreActions, useStoreState } from "../store/hooks";
 import { HelpModal } from "./help-modal";
 import { isParseError, ParseError } from "../worker/errors";
 
 const CHARS = "λ₀₁₂₃₄₅₆₇₈₉".split("");
+const SAMPLES = [
+    { title: "0", value: "(λf.λx.x)" },
+    { title: "1", value: "(λf.λx.f x)" },
+    { title: "2", value: "(λf.λx.f (f x))" },
+    { title: "3", value: "(λf.λx.f (f (f x)))" },
+    { title: "4", value: "(λf.λx.f (f (f (f x))))" },
+    { title: "Succ", value: "(λn.λf.λx.f (n f x))" },
+    { title: "True", value: "(λa.λb.a)" },
+    { title: "False", value: "(λa.λb.b)" },
+    { title: "If", value: "(λ bool.λ a.λ b.bool a b)" },
+];
+const LONG_SAMPLES = [
+    { title: "0+1+1", value: "(λ succ.λ0.\n\tsucc (succ 0)\n) (λn.λf.λx.f (n f x)) (λf.λx.x)" },
+];
 
 /**
  * CodeMirror has its own state management system. However, we want to use React's state management
  * to control when/what lints are displayed. `lintFactory` creates functions to "break out" of CodeMirror's
  * system and allows us to set the lints by calling the `setLint` function of the return value.
- * 
+ *
  * The `linProcessor` function should be passed to CodeMirror's `linter(...)` function. CodeMirror
  * will call `lintProcessor` when it feels like.
  *
@@ -87,6 +105,24 @@ export function ProgramEditor() {
             </Button>
         );
     }
+    function typeSampleFactory(sample: typeof SAMPLES[number]) {
+        return (
+            <Dropdown.Item
+                onClick={() => {
+                    if (!editor.view?.state) {
+                        return;
+                    }
+                    const edit = editor.view.state.replaceSelection(
+                        sample.value
+                    );
+                    const transaction = editor.view.state.update(edit);
+                    editor.view?.dispatch(transaction);
+                }}
+            >
+                {sample.title}
+            </Dropdown.Item>
+        );
+    }
 
     return (
         <Card>
@@ -110,15 +146,44 @@ export function ProgramEditor() {
                 </div>
             </Card.Body>
             <Card.Footer>
-                <ButtonGroup className="me-1">{typeCharFactory(0)}</ButtonGroup>
-                Subscripts:
-                <ButtonGroup className="ms-1">
-                    {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((d) => (
-                        <React.Fragment key={d}>
-                            {typeCharFactory(d)}
-                        </React.Fragment>
-                    ))}
-                </ButtonGroup>
+                <Container>
+                    <Row>
+                        <Col>
+                            <ButtonGroup className="me-1">
+                                {typeCharFactory(0)}
+                            </ButtonGroup>
+                        </Col>
+                        <Col>
+                            <ButtonGroup className="ms-1">
+                                {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((d) => (
+                                    <React.Fragment key={d}>
+                                        {typeCharFactory(d)}
+                                    </React.Fragment>
+                                ))}
+                            </ButtonGroup>
+                        </Col>
+                        <Col>
+                            <DropdownButton
+                                className="ms-1"
+                                variant="secondary"
+                                title={"Presets"}
+                            >
+                                {SAMPLES.map((s) => (
+                                    <React.Fragment key={s.title}>
+                                        {typeSampleFactory(s)}
+                                    </React.Fragment>
+                                ))}
+                                <Dropdown.Divider />
+                                <Dropdown.Header>Long Samples</Dropdown.Header>
+                                {LONG_SAMPLES.map((s) => (
+                                    <React.Fragment key={s.title}>
+                                        {typeSampleFactory(s)}
+                                    </React.Fragment>
+                                ))}
+                            </DropdownButton>
+                        </Col>
+                    </Row>
+                </Container>
             </Card.Footer>
             <HelpModal show={helpShow} setShow={setHelpShow} />
         </Card>

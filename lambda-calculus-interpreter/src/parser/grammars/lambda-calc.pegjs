@@ -3,8 +3,8 @@
 //
 
 program "program"
-    = expression
-    / EOF
+    = e:expression _ { return e; }
+    / _ EOF { return undefined; }
 
 expression "expression"
     = application
@@ -30,7 +30,7 @@ function
     / "(" _ f:function _ ")" { return f; }
 
 inner_function "inner_function"
-    = lambda _ v:name _ "." _ expr:expression {
+    = lambda _ v:name (_ "." _ / [ \t\n\r]+) _ expr:expression {
             return { type: "lambda", var: v, body: expr };
         }
 
@@ -38,7 +38,7 @@ name
     = inner_name
     / "(" _ n:name _ ")" { return n; }
 
-inner_name "name" = $($[a-z]+ $("_" [0-9]+)? ($[₀₁₂₃₄₅₆₇₈₉]+)?)
+inner_name "name" = $($[a-zA-Z0-9_]+ ($[₀₁₂₃₄₅₆₇₈₉]+)?)
 
 lambda "lambda"
     = "\\"

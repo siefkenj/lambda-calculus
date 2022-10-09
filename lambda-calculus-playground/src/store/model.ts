@@ -18,4 +18,6 @@ export interface StoreModel {
     setEvaluated: Action<StoreModel, Program>;
     setEvaluatedString: Action<StoreModel, string>;
     evaluate: Thunk<StoreModel, void>;
+    evaluateError: string | null;
+    setEvaluateError: Action<StoreModel, string | null>;
 }

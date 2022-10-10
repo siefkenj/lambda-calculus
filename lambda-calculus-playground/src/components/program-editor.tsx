@@ -8,7 +8,6 @@ import {
     Card,
     ButtonGroup,
     Button,
-    Nav,
     Navbar,
     Dropdown,
     DropdownButton,
@@ -30,7 +29,7 @@ const SAMPLES = [
     { title: "If", value: "(λ bool.λ a.λ b.bool a b)" },
 ];
 const LONG_SAMPLES = [
-    { title: "0+1+1", value: "(λ succ.λ0.\n\tsucc (succ 0)\n) (λn.λf.λx.f (n f x)) (λf.λx.x)" },
+    { title: "0+1+1", value: "(λ succ.λ 0.\n\tsucc (succ 0)\n) (λn.λf.λx.f (n f x)) (λf.λx.x)" },
 ];
 
 /**
@@ -149,22 +148,13 @@ export function ProgramEditor() {
                 <Container>
                     <Row>
                         <Col>
-                            <ButtonGroup className="me-1">
+                            <ButtonGroup className="m-1">
                                 {typeCharFactory(0)}
                             </ButtonGroup>
                         </Col>
                         <Col>
-                            <ButtonGroup className="ms-1">
-                                {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((d) => (
-                                    <React.Fragment key={d}>
-                                        {typeCharFactory(d)}
-                                    </React.Fragment>
-                                ))}
-                            </ButtonGroup>
-                        </Col>
-                        <Col>
                             <DropdownButton
-                                className="ms-1"
+                                className="m-1"
                                 variant="secondary"
                                 title={"Presets"}
                             >

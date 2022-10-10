@@ -1,5 +1,5 @@
 import { action, createStore, thunk } from "easy-peasy";
-import { canonicalPrint, print } from "lambda-calculus-interpreter";
+import { canonicalPrint, printMinimal } from "lambda-calculus-interpreter";
 import { isParseError } from "../worker/errors";
 import { parsingWorker } from "../worker/worker-wrapper";
 import { StoreModel } from "./model";
@@ -19,7 +19,7 @@ export const store = createStore<StoreModel>({
             actions.setCurrentProgram(parsed);
             actions.setParsed({
                 canonical: canonicalPrint(parsed),
-                direct: print(parsed),
+                direct: printMinimal(parsed),
             });
         } catch (e) {
             if (isParseError(e)) {
@@ -56,7 +56,7 @@ export const store = createStore<StoreModel>({
             );
             actions.setEvaluateError(null);
             actions.setEvaluated(evaluated);
-            actions.setEvaluatedString(print(evaluated));
+            actions.setEvaluatedString(printMinimal(evaluated));
         } catch (e) {
             actions.setEvaluateError(String(e));
         }

@@ -75,11 +75,7 @@ export function print(prog: Program): string {
         case "empty_program":
             return "";
         case "name":
-            if (prog.boundName == null) {
-                return prog.val;
-            } else {
-                return `${prog.val}${printSubscript(prog.boundName)}`;
-            }
+            return printNameWithSubscript(prog);
         case "lambda":
             return `λ${print(prog.var)}.${print(prog.body)}`;
         case "application":
@@ -93,6 +89,104 @@ export function print(prog: Program): string {
                 })
                 .join(" ");
     }
+}
+
+function printNameWithSubscript(n: Name): string {
+    return n.boundName != null ? n.val + printSubscript(n.boundName) : n.val;
+}
+
+/**
+ * Prints a `Name` object in a non-ambiguous way.
+ */
+function printMangledName(n: Name): string {
+    return `${n.val}|${n.boundName}`;
+}
+
+/**
+ * Find the next unused name by taking the base name an applying subscripts if needed.
+ */
+function getNextUnusedName(n: Name, usedNames: Set<string>): string {
+    let i = 0;
+    let newName: Name = {
+        type: "name",
+        val: n.val,
+        boundName: undefined,
+    };
+    while (usedNames.has(printNameWithSubscript(newName))) {
+        i++;
+        newName.boundName = i;
+    }
+    return printNameWithSubscript(newName);
+}
+
+/**
+ * Print a program with a minimal amount of variable renaming (only what is required to keep variable names from clashing).
+ */
+export function printMinimal(prog: Program): string {
+    if (prog.type === "empty_program") {
+        return "";
+    }
+
+    // Free variables should keep their names
+    const freeVars = getVars(prog).filter((v) => v.boundName == null);
+
+    function _printMinimal(
+        expr: Expression,
+        state: {
+            usedInScope: Set<string>;
+            renameMap: Map<string, string>;
+        }
+    ): string {
+        switch (expr.type) {
+            case "name": {
+                const mangledName = printMangledName(expr);
+                let desiredName = state.renameMap.get(mangledName);
+                if (desiredName) {
+                    return desiredName;
+                }
+                // If we have aren't in the rename map, we are a free variable.
+                // In that case, we need to pick a unique name and also save that name in case we come up again in the future.
+                desiredName = getNextUnusedName(expr, state.usedInScope);
+                state.usedInScope.add(desiredName);
+                state.renameMap.set(mangledName, desiredName);
+                return desiredName;
+            }
+            case "lambda": {
+                // The variable of a lambda expression should be made clearly different
+                // in cases where it is strictly not necessary. For example `\x.\x.x` should
+                // become `\x.\x1.x1` even thought it is not strictly necessary.
+                const mangledName = printMangledName(expr.var);
+                const targetName = getNextUnusedName(
+                    expr.var,
+                    state.usedInScope
+                );
+                state.usedInScope.add(targetName);
+                state.renameMap.set(mangledName, targetName);
+                const ret = `λ${_printMinimal(expr.var, state)}.${_printMinimal(
+                    expr.body,
+                    state
+                )}`;
+                state.usedInScope.delete(targetName);
+                state.renameMap.delete(mangledName);
+                return ret;
+            }
+            case "application":
+                return expr.body
+                    .map((p) => {
+                        const body = _printMinimal(p, state);
+                        if (p.type === "lambda" || p.type === "application") {
+                            return `(${body})`;
+                        }
+                        return body;
+                    })
+                    .join(" ");
+        }
+    }
+
+    return _printMinimal(prog, {
+        usedInScope: new Set(freeVars.map((v) => v.val)),
+        renameMap: new Map(freeVars.map((v) => [printMangledName(v), v.val])),
+    });
 }
 
 /**

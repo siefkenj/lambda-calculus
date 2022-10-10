@@ -1,6 +1,14 @@
 import { evaluate } from "./evaluator";
 import { parse, parseBasic } from "./parser";
 export * from "./parser/types";
-import { print, canonicalPrint, getVars } from "./printer";
+import { print, canonicalPrint, getVars, printMinimal } from "./printer";
 
-export { parse, parseBasic, evaluate, print, canonicalPrint, getVars };
+export {
+    parse,
+    parseBasic,
+    evaluate,
+    print,
+    canonicalPrint,
+    getVars,
+    printMinimal,
+};

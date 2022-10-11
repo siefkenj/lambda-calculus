@@ -1,4 +1,4 @@
-import { action, createStore, thunk } from "easy-peasy";
+import { action, computed, createStore, thunk } from "easy-peasy";
 import { canonicalPrint, printMinimal } from "lambda-calculus-interpreter";
 import { isParseError } from "../worker/errors";
 import { parsingWorker } from "../worker/worker-wrapper";
@@ -41,10 +41,11 @@ export const store = createStore<StoreModel>({
         Object.assign(state.parsed, payload);
     }),
     evaluated: { type: "empty_program" },
-    evaluatedString: "",
-    setEvaluatedString: action((state, payload) => {
-        state.evaluatedString = payload;
-    }),
+    evaluatedData: computed((state) => ({
+        direct: printMinimal(state.evaluated),
+        canonical: canonicalPrint(state.evaluated),
+        raw: "",
+    })),
     setEvaluated: action((state, payload) => {
         state.evaluated = payload;
     }),
@@ -56,8 +57,8 @@ export const store = createStore<StoreModel>({
             );
             actions.setEvaluateError(null);
             actions.setEvaluated(evaluated);
-            actions.setEvaluatedString(printMinimal(evaluated));
         } catch (e) {
+            actions.setEvaluated({ type: "empty_program" });
             actions.setEvaluateError(String(e));
         }
     }),

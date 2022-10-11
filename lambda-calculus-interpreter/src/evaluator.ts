@@ -1,5 +1,6 @@
-import { Expression, Name, Program } from "./parser/types";
-import { canonicalPrint } from "./printer";
+import { canonicalRename } from "./deshadow";
+import { Expression, Lambda, Name, Program } from "./parser/types";
+import { canonicalPrint,  print } from "./printer";
 
 /**
  * Run `prog` until termination.
@@ -89,24 +90,86 @@ function replaceVar(
         }
         return name.val === oldVar.val && name.boundName === oldVar.boundName;
     }
+    let largestIndex = largestVarIndex(prog);
+    //console.log(
+    //    print(oldVar),
+    //    print(prog),
+    //    print(
+    //        canonicalRename(prog, { replaceNameWithT: false, startIndex: 10 })
+    //    )
+    //);
+
+    function _replaceVar(prog: Expression) {
+        switch (prog.type) {
+            case "name":
+                if (nameMatches(prog)) {
+                    const ret = canonicalRename(newVal, {
+                        replaceNameWithT: false,
+                        startIndex: largestIndex,
+                    }) as Expression;
+                    largestIndex = Math.max(largestIndex, largestVarIndex(ret));
+                    return ret;
+                } else {
+                    return prog;
+                }
+            case "lambda": {
+                if (nameMatches(prog.var)) {
+                    throw new Error(
+                        `Cannot replace variable ${print(
+                            oldVar
+                        )} since it appears as the variable name in the lambda ${print(
+                            prog
+                        )}`
+                    );
+                }
+                const ret = canonicalRename(
+                    { ...prog, body: _replaceVar(prog.body) },
+                    {
+                        replaceNameWithT: false,
+                        startIndex: largestIndex,
+                    }
+                ) as Expression;
+                largestIndex = Math.max(largestIndex, largestVarIndex(ret));
+                return ret;
+            }
+            case "application": {
+                const ret = canonicalRename(
+                    {
+                        type: "application",
+                        body: prog.body.map((p) => _replaceVar(p)),
+                    },
+                    {
+                        replaceNameWithT: false,
+                        startIndex: largestIndex,
+                    }
+                ) as Expression;
+                largestIndex = Math.max(largestIndex, largestVarIndex(ret));
+                return ret;
+            }
+        }
+    }
+
+    return _replaceVar(prog);
+}
+
+/**
+ * Get the largest index of a variable used inside of the program.
+ */
+function largestVarIndex(prog: Program): number {
     switch (prog.type) {
+        case "empty_program":
+            return 0;
         case "name":
-            if (nameMatches(prog)) {
-                return newVal;
-            } else {
-                return prog;
-            }
+            return prog.boundName || 0;
         case "lambda":
-            if (nameMatches(prog.var)) {
-                throw new Error(
-                    `Cannot replace variable ${oldVar} since it appears at the variable name in a lambda`
-                );
-            }
-            return { ...prog, body: replaceVar(prog.body, oldVar, newVal) };
+            return Math.max(
+                largestVarIndex(prog.var),
+                largestVarIndex(prog.body)
+            );
         case "application":
-            return {
-                type: "application",
-                body: prog.body.map((p) => replaceVar(p, oldVar, newVal)),
-            };
+            if (Array.isArray(prog.body)) {
+                return Math.max(...prog.body.map((p) => largestVarIndex(p)));
+            }
+            return largestVarIndex(prog.body);
     }
 }

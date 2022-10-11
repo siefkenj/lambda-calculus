@@ -1,4 +1,4 @@
-import { Action, Thunk } from "easy-peasy";
+import { Action, Computed, Thunk } from "easy-peasy";
 import { Program } from "lambda-calculus-interpreter";
 import { ParseError } from "../worker/errors";
 
@@ -14,9 +14,8 @@ export interface StoreModel {
     parsed: ParsedBundle;
     setParsed: Action<StoreModel, Partial<ParsedBundle>>;
     evaluated: Program;
-    evaluatedString: string;
+    evaluatedData:  Computed<StoreModel, ParsedBundle>;
     setEvaluated: Action<StoreModel, Program>;
-    setEvaluatedString: Action<StoreModel, string>;
     evaluate: Thunk<StoreModel, void>;
     evaluateError: string | null;
     setEvaluateError: Action<StoreModel, string | null>;

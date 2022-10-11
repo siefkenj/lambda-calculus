@@ -23,4 +23,5 @@ export type Name = {
     type: "name";
     val: string;
     boundName?: number;
+    freeInScope?: boolean;
 };

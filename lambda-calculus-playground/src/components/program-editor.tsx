@@ -24,12 +24,26 @@ const SAMPLES = [
     { title: "3", value: "(λf.λx.f (f (f x)))" },
     { title: "4", value: "(λf.λx.f (f (f (f x))))" },
     { title: "Succ", value: "(λn.λf.λx.f (n f x))" },
+    { title: "Add", value: "(λa.λb.a (λn.λf.λx.f (n f x)) b)" },
     { title: "True", value: "(λa.λb.a)" },
     { title: "False", value: "(λa.λb.b)" },
     { title: "If", value: "(λ bool.λ a.λ b.bool a b)" },
+    { title: "Tup", value: "(λa.λb.λ bool.bool a b)" },
 ];
 const LONG_SAMPLES = [
-    { title: "0+1+1", value: "(λ succ.λ 0.\n\tsucc (succ 0)\n) (λn.λf.λx.f (n f x)) (λf.λx.x)" },
+    {
+        title: "0+1+1",
+        value: "(λ succ.λ 0.\n\tsucc (succ 0)\n) (λn.λf.λx.f (n f x)) (λf.λx.x)",
+    },
+    {
+        title: "2 + 3",
+        value: `(λAdd.λ2.λ3.
+\tAdd 2 3
+)
+(λa.λb.a (λn.λf.λx.f (n f x)) b)
+(λf.λx.f (f x))
+(λf.λx.f (f (f x)))`,
+    },
 ];
 
 /**

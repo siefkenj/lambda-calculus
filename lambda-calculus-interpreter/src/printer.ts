@@ -1,4 +1,5 @@
-import { Expression, Name, Program } from "./parser/types";
+import { canonicalRename, deShadowNames } from "./deshadow";
+import { Expression, Lambda, Name, Program } from "./parser/types";
 
 const UNICODE_SUBSCRIPT = "₀₁₂₃₄₅₆₇₈₉".split("");
 /**
@@ -49,22 +50,53 @@ export function printDirect(prog: Program): string {
  * are always listed. Bound variables are only listed the first time they occur.
  */
 export function getVars(prog: Program): Name[] {
-    switch (prog.type) {
-        case "empty_program":
-            return [];
-        case "name":
-            if (prog.boundName == null) {
-                // In this case, we have a free variable, which is always returned
-                return [prog];
-            }
-            return [];
-        case "lambda":
-            return [prog.var].concat(getVars(prog.body));
-        case "application":
-            return prog.body
-                .filter((p) => p.type !== "name" || p.boundName == null)
-                .flatMap((p) => getVars(p));
+    if (prog.type === "empty_program") {
+        return [];
     }
+
+    const boundVars: Set<number | undefined> = new Set();
+
+    // First we get all the bound vars. Since we may be parsing a sub expression,
+    // we cannot rely on `boundName` to determine if a var is free or not.
+    function getBoundVars(expr: Expression) {
+        switch (expr.type) {
+            case "name":
+                break;
+            case "lambda":
+                if (expr.var.boundName) {
+                    boundVars.add(expr.var.boundName);
+                }
+                getBoundVars(expr.body);
+                break;
+            case "application":
+                if (Array.isArray(expr.body)) {
+                    expr.body.forEach((e) => getBoundVars(e));
+                } else {
+                    getBoundVars(expr);
+                }
+        }
+    }
+    getBoundVars(prog);
+
+    function _getVars(expr: Expression): Name[] {
+        switch (expr.type) {
+            case "name":
+                if (expr.boundName == null || !boundVars.has(expr.boundName)) {
+                    // In this case, we have a free variable, which is always returned
+                    return [{ ...expr, freeInScope: true }];
+                }
+                return [];
+            case "lambda":
+                return [expr.var].concat(_getVars(expr.body));
+            case "application":
+                return expr.body
+                    .filter(
+                        (p) => p.type !== "name" || !boundVars.has(p.boundName)
+                    )
+                    .flatMap((p) => _getVars(p));
+        }
+    }
+    return _getVars(prog);
 }
 
 /**
@@ -92,7 +124,9 @@ export function print(prog: Program): string {
 }
 
 function printNameWithSubscript(n: Name): string {
-    return n.boundName != null ? n.val + printSubscript(n.boundName) : n.val;
+    return n.boundName != null
+        ? n.val + printSubscript(Number(n.boundName))
+        : n.val;
 }
 
 /**
@@ -128,7 +162,7 @@ export function printMinimal(prog: Program): string {
     }
 
     // Free variables should keep their names
-    const freeVars = getVars(prog).filter((v) => v.boundName == null);
+    const freeVars = getVars(prog).filter((v) => v.freeInScope === true);
 
     function _printMinimal(
         expr: Expression,
@@ -202,50 +236,4 @@ export function canonicalPrint(prog: Program): string {
     return print(prog);
 }
 
-/**
- * Rename all bound variables to be called `t` with a `boundName` given in canonical order.
- */
-export function canonicalRename(prog: Program): Program {
-    if (prog.type === "empty_program") {
-        return prog;
-    }
-
-    const vars = getVars(prog);
-
-    // All bound variables need to be reindexed in canonical order,
-    // so we build up a renaming map.
-    const varRenameMap: number[] = [];
-    vars.filter((p) => p.boundName != null).forEach((v, i) => {
-        varRenameMap[v.boundName || 0] = i;
-    });
-    function renameVar(name: Name): Name {
-        if (name.boundName == null) {
-            return name;
-        }
-        return {
-            type: "name",
-            val: "t",
-            boundName: varRenameMap[name.boundName || 0] + 1,
-        };
-    }
-
-    function doRename(prog: Expression): Expression {
-        switch (prog.type) {
-            case "name":
-                return renameVar(prog);
-            case "lambda":
-                return {
-                    type: "lambda",
-                    var: renameVar(prog.var),
-                    body: doRename(prog.body),
-                };
-            case "application":
-                return {
-                    type: "application",
-                    body: prog.body.map((p) => doRename(p)),
-                };
-        }
-    }
-
-    return doRename(prog);
-}
+export { canonicalRename };

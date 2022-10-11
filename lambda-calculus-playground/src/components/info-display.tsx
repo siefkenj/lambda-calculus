@@ -22,7 +22,7 @@ export function NotesDisplay() {
     if (evaluateError) {
         notes.push(
             <Alert variant="danger" key="evaluate">
-                <b>Evaluation Error</b>: too much recursion
+                {evaluateError}
             </Alert>
         );
     }

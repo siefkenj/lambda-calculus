@@ -36,6 +36,32 @@ describe("parse", () => {
         ]);
     });
 
+    it("Parse comments", () => {
+        expect(parseBasic("//abc\nx y")).toEqual(["x", "y"]);
+        expect(parseBasic("//abc\n//abc\nx y//abc")).toEqual(["x", "y"]);
+        expect(parseBasic("//abc\n//abc\nx y\n\n//abc")).toEqual(["x", "y"]);
+
+        expect(parseBasic("lambda x.\n//abc\nx y")).toEqual({
+            type: "lambda",
+            var: "x",
+            body: ["x", "y"],
+        });
+    });
+    it.skip("Parse comments in weird places", () => {
+        expect(parseBasic("(\\x.x//abc\n) \\x\n\n//fun\n//times\n.x")).toEqual([
+            {
+                type: "lambda",
+                var: "x",
+                body: "x",
+            },
+            {
+                type: "lambda",
+                var: "x",
+                body: "x",
+            },
+        ]);
+    });
+
     it("Program parsing", () => {
         expect(basicProgramToProgram(parseBasic("x y"))).toEqual({
             type: "application",

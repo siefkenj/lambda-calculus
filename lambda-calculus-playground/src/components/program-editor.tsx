@@ -24,6 +24,7 @@ const SAMPLES = [
     { title: "3", value: "(λf.λx.f (f (f x)))" },
     { title: "4", value: "(λf.λx.f (f (f (f x))))" },
     { title: "Succ", value: "(λn.λf.λx.f (n f x))" },
+    { title: "Pred", value: "(λn.λf.λx.(n (λtup.λi.i (λa.λb.b) ((tup (λa.λb.a)) (tup (λa.λb.b)) (f (tup (λa.λb.b))))) (λi.i (λa.λb.a) x)) (λa.λb.b))" },
     { title: "Add", value: "(λa.λb.a (λn.λf.λx.f (n f x)) b)" },
     { title: "True", value: "(λa.λb.a)" },
     { title: "False", value: "(λa.λb.b)" },

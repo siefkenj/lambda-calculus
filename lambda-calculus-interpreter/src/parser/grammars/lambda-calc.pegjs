@@ -3,7 +3,7 @@
 //
 
 program "program"
-    = e:expression _ { return e; }
+    = _ e:expression _ { return e; }
     / _ EOF { return undefined; }
 
 expression "expression"
@@ -20,6 +20,7 @@ paren_application = "(" a:inner_application ")" { return a; }
 inner_application
     = _
         e:(function / name / paren_application)
+        _
         rest:(
             _ n:(p:paren_application { return [p]; } / expression) { return n; }
         )+
@@ -30,7 +31,7 @@ function
     / "(" _ f:function _ ")" { return f; }
 
 inner_function "inner_function"
-    = lambda _ v:name (_ "." _ / [ \t\n\r]+) _ expr:expression {
+    = lambda _ v:name (_ "." _ / [ \t\n\r]+) _ expr:expression _ {
             return { type: "lambda", var: v, body: expr };
         }
 
@@ -45,6 +46,13 @@ lambda "lambda"
     / "λ"
     / "lambda"
 
-_ "whitespace" = [ \t\n\r]*
+_ "comment_or_whitespace"
+    = comment
+    / ws
+
+ws "whitespace" = [ \t\n\r]*
+
+comment "comment"
+    = [ \t]* "//" (c:. & { return !"\n\r".includes(c); })* ("\n" ws _ / EOF)
 
 EOF = !.

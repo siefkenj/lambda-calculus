@@ -45,6 +45,37 @@ const LONG_SAMPLES = [
 (λf.λx.f (f x))
 (λf.λx.f (f (f x)))`,
     },
+    {title: "Pred (annotated)",
+    value:`// We pass in some helper functions. Since
+// they're the first things passed in, they
+// can be used like "global" declarations
+((λTup.λT.λF.λIf.
+  // Define a function K which takes in an f and
+  // a tuple (b, x). If b = T, return
+  // (F, x). If b = F, return (F, f x)
+  //
+  // This function is used to get rid of the
+  // "first application of f".
+  (λK.
+    // Here is where the meat of "pred" is
+    λn.λf.λx.
+      (n (K f) (Tup T x)) F
+  )
+  // The definition of K
+  (λf.λtup.
+    (Tup F (If (tup T) (tup F) (f (tup F))))
+  )
+)
+// Tuple creator
+(λa.λb.λi.i a b)
+// T
+(λa.λb.a)
+// F
+(λa.λb.b)
+// The "if" function
+(λi.λ a.λ b.i a b))
+`
+}
 ];
 
 /**

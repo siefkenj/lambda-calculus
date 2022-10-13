@@ -5,8 +5,8 @@
     "description": "Toy evaluator for lambda calculus",
     "workspaces": [
         "./lambda-calculus-interpreter",
-        "./lambda-calculus-playground",
-        "./lambda-lezer-grammar"
+        "./lambda-lezer-grammar",
+        "./lambda-calculus-playground"
     ],
     "scripts": {
         "build": "npm run build -ws",

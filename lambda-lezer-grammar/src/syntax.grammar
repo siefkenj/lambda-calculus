@@ -1,0 +1,39 @@
+@top Program { expression* }
+
+@skip { space | LineComment }
+
+kw<term> { @specialize[@name={term}]<Name, term> }
+
+expression {
+  Name |
+  Abstraction |
+  String |
+  Boolean |
+  Application { "(" expression* ")" }
+}
+
+Abstraction {
+  Lambda AbstractionArg "." expression
+}
+
+AbstractionArg {
+  Name
+}
+
+Lambda { "λ" | "\\" | kw<"lambda"> }
+
+@tokens {
+  Name { $[a-zA-Z_0-9₀₁₂₃₄₅₆₇₈₉]+ }
+
+  String { '"' (!["\\] | "\\" _)* '"' }
+
+  Boolean { "#t" | "#f" }
+
+  LineComment { "//" ![\n]* }
+  
+  space { $[ \t\n\r]+ }
+
+  "(" ")" "."
+}
+
+@detectDelim

@@ -12,6 +12,7 @@ import {
     Dropdown,
     DropdownButton,
 } from "react-bootstrap";
+import { LambdaLanguageSupport } from "lambda-lezer-grammar";
 import { useStoreActions, useStoreState } from "../store/hooks";
 import { HelpModal } from "./help-modal";
 import { isParseError, ParseError } from "../worker/errors";
@@ -24,7 +25,10 @@ const SAMPLES = [
     { title: "3", value: "(λf.λx.f (f (f x)))" },
     { title: "4", value: "(λf.λx.f (f (f (f x))))" },
     { title: "Succ", value: "(λn.λf.λx.f (n f x))" },
-    { title: "Pred", value: "(λn.λf.λx.(n (λtup.λi.i (λa.λb.b) ((tup (λa.λb.a)) (tup (λa.λb.b)) (f (tup (λa.λb.b))))) (λi.i (λa.λb.a) x)) (λa.λb.b))" },
+    {
+        title: "Pred",
+        value: "(λn.λf.λx.(n (λtup.λi.i (λa.λb.b) ((tup (λa.λb.a)) (tup (λa.λb.b)) (f (tup (λa.λb.b))))) (λi.i (λa.λb.a) x)) (λa.λb.b))",
+    },
     { title: "Add", value: "(λa.λb.a (λn.λf.λx.f (n f x)) b)" },
     { title: "True", value: "(λa.λb.a)" },
     { title: "False", value: "(λa.λb.b)" },
@@ -45,8 +49,9 @@ const LONG_SAMPLES = [
 (λf.λx.f (f x))
 (λf.λx.f (f (f x)))`,
     },
-    {title: "Pred (annotated)",
-    value:`// We pass in some helper functions. Since
+    {
+        title: "Pred (annotated)",
+        value: `// We pass in some helper functions. Since
 // they're the first things passed in, they
 // can be used like "global" declarations
 ((λTup.λT.λF.λIf.
@@ -74,8 +79,8 @@ const LONG_SAMPLES = [
 (λa.λb.b)
 // The "if" function
 (λi.λ a.λ b.i a b))
-`
-}
+`,
+    },
 ];
 
 /**
@@ -111,6 +116,7 @@ function lintFactory() {
 const { setLint, lintProcessor } = lintFactory();
 
 const lambdaLinter = linter(lintProcessor);
+const lambdaLanguageSupport = LambdaLanguageSupport()
 
 export function ProgramEditor() {
     const [helpShow, setHelpShow] = React.useState(false);
@@ -121,7 +127,7 @@ export function ProgramEditor() {
         container: editorRef.current,
         value: editorText,
         onChange: (text) => editorChange(text),
-        extensions: [lambdaLinter],
+        extensions: [lambdaLinter, lambdaLanguageSupport],
     });
     const parseError = useStoreState((state) => state.parseError);
 

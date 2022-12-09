@@ -180,7 +180,7 @@ export function ProgramEditor() {
             <Card.Header>
                 <Navbar>
                     <Container>
-                        <Navbar.Brand>λ Calculus Expression</Navbar.Brand>
+                        <Navbar.Brand>λ Calculus Expression!</Navbar.Brand>
                         <Button
                             className="ms-auto"
                             variant="outline-secondary"
